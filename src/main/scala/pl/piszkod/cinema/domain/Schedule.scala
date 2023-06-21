@@ -1,4 +1,6 @@
 package pl.piszkod.cinema.domain
 
-// FIXME: Might not be a domain thing but e.g. some ScheduleService that will then contain this
-case class Schedule(schedule: Map[Room, Slot])
+// TODO: This could be separate entites, but for now I've decided to use a simple typealiased map
+type Schedule = Map[Room.Name, List[Slot]]
+type RoomSchedule = List[Slot]
+

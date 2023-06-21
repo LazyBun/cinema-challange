@@ -1,14 +1,18 @@
 package pl.piszkod.cinema.domain
 
-import scala.concurrent.duration.Duration
+import java.time.Duration
 
 case class Movie(
+    uid: Movie.Uid,
     title: Movie.Title,
     length: Movie.Length,
-    kind: Movie.Kind
+    kind: Movie.Kind,
+    requirements: Seq[Movie.Requirement]
 )
 
 object Movie {
+
+  case class Uid(value: String) extends AnyVal
 
   case class Title(value: String) extends AnyVal
 
@@ -16,8 +20,16 @@ object Movie {
 
   sealed trait Kind
 
-  case object Regular extends Kind
+  object Kind {
+    case object Regular extends Kind
 
-  case object Premiere extends Kind
+    case object Premiere extends Kind
+  }
+
+  sealed trait Requirement
+
+  object Requirement {
+    case object Glasses3D extends Requirement
+  }
 
 }

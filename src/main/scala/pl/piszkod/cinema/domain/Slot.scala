@@ -1,14 +1,37 @@
 package pl.piszkod.cinema.domain
 
 import java.time.ZonedDateTime
-import scala.concurrent.duration.Duration
+import java.util.concurrent.TimeUnit
+import java.time.Duration
 
-sealed trait Slot
+sealed trait Slot {
+  val start: Slot.Start
+
+  val end: Slot.End
+
+  def collides(otherSlot: Slot): Boolean = {
+    start.value.isBefore(otherSlot.end.value) && otherSlot.start.value.isBefore(
+      end.value
+    )
+  }
+
+}
+
+object Slot {
+
+  case class Start(value: ZonedDateTime) extends AnyVal
+  case class End(value: ZonedDateTime) extends AnyVal
+
+}
 
 case class Block(
-    start: Block.Start,
+    override val start: Slot.Start,
     blockTime: Block.Time
-) extends Slot
+) extends Slot {
+
+  override val end: Slot.End = Slot.End(start.value.plus(blockTime.value))
+
+}
 
 object Block {
   case class Start(value: ZonedDateTime) extends AnyVal
@@ -16,10 +39,13 @@ object Block {
 }
 
 case class Show(
+    override val start: Slot.Start,
     movie: Movie,
-    start: Show.Start,
     cleaningTime: Show.CleaningTime
-) extends Slot
+) extends Slot {
+  override val end: Slot.End =
+    Slot.End(start.value.plus(movie.length.value).plus(cleaningTime.value))
+}
 
 object Show {
 
