@@ -5,6 +5,7 @@ import cats.syntax.all.*
 import cats.data.EitherT
 import cats.effect.std.Semaphore
 import pl.piszkod.cinema.domain.{Block, Movie, Room, Schedule, Show, Slot}
+import pl.piszkod.cinema.repository.{RoomRepository, ScheduleRepository}
 import pl.piszkod.cinema.service
 import pl.piszkod.cinema.service.ScheduleManager.Error
 

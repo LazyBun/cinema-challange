@@ -1,9 +1,10 @@
-package pl.piszkod.cinema.service
+package pl.piszkod.cinema.repository
 
 import cats.data.EitherT
 import cats.effect.IO
 import pl.piszkod.cinema.domain.{Movie, Room}
 import pl.piszkod.cinema.service
+import pl.piszkod.cinema.repository.RoomRepository
 
 trait RoomRepository {
 
@@ -17,7 +18,7 @@ object RoomRepository {
   object Error {
 
     case class RoomNotFound(name: Room.Name)
-        extends service.RoomRepository.Error
+        extends RoomRepository.Error
 
   }
 }

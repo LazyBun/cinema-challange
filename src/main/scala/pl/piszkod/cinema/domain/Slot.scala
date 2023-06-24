@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import java.time.Duration
 
 // TODO: Document the idea behind the slot type
-sealed trait Slot {
+trait Slot {
   val start: Slot.Start
 
   val end: Slot.End

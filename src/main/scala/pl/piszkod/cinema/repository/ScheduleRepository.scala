@@ -1,8 +1,9 @@
-package pl.piszkod.cinema.service
+package pl.piszkod.cinema.repository
 
 import cats.data.EitherT
 import cats.effect.{IO, Ref}
 import pl.piszkod.cinema.domain.{Room, RoomSchedule, Schedule, Slot}
+import pl.piszkod.cinema.repository.ScheduleRepository
 
 trait ScheduleRepository {
 
