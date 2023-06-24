@@ -45,6 +45,20 @@ Not defined in task, mentioned in user stories. ASSUMPTION: I'm assuming that it
 
 Time slot after each show we need care of cleaning the room.
 
+### New terms
+
+* Slot
+
+TODO: proper definition
+
+Item in a Schedule. Can be either a Show or a Block
+
+* Block
+
+TODO: proper definition
+
+Block is a type of Slot that signifies blockage
+
 ## Run application
 
 ```shell

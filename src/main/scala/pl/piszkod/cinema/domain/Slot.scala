@@ -4,6 +4,7 @@ import java.time.ZonedDateTime
 import java.util.concurrent.TimeUnit
 import java.time.Duration
 
+// TODO: Document the idea behind the slot type
 sealed trait Slot {
   val start: Slot.Start
 
@@ -34,23 +35,24 @@ case class Block(
 }
 
 object Block {
-  case class Start(value: ZonedDateTime) extends AnyVal
   case class Time(value: Duration) extends AnyVal
 }
 
 case class Show(
     override val start: Slot.Start,
-    movie: Movie,
-    cleaningTime: Show.CleaningTime
+    // TODO: Better name? This is to indicate that those values are a copy (because we want to have historical data like that)
+    movieSnapshot: Movie,
+    roomCleaningTimeSnapshot: Show.CleaningTime
 ) extends Slot {
   override val end: Slot.End =
-    Slot.End(start.value.plus(movie.length.value).plus(cleaningTime.value))
+    Slot.End(
+      start.value
+        .plus(movieSnapshot.length.value)
+        .plus(roomCleaningTimeSnapshot.value)
+    )
 }
 
 object Show {
-
-  // FIXME consider if this is the time representation we want to go with
-  case class Start(value: ZonedDateTime) extends AnyVal
 
   case class CleaningTime(value: Duration) extends AnyVal
 

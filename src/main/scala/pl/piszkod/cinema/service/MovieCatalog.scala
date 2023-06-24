@@ -1,16 +1,31 @@
 package pl.piszkod.cinema.service
 
+import cats.data.EitherT
 import cats.effect.IO
 import pl.piszkod.cinema.domain.Movie
+import pl.piszkod.cinema.service
 
 trait MovieCatalog {
 
-  def find(uid: Movie.Uid): IO[Option[Movie]]
+  def get(uid: Movie.Uid): EitherT[IO, MovieCatalog.Error, Movie]
 
 }
 
-class InMemoryMovieCatalog(val catalog: Seq[Movie]) extends MovieCatalog {
+object MovieCatalog {
+  sealed trait Error
 
-  override def find(uid: Movie.Uid): IO[Option[Movie]] = ???
+  object Error {
 
+    case class MovieNotFound(uid: Movie.Uid) extends service.MovieCatalog.Error
+
+  }
+}
+
+class InMemoryMovieCatalog(val catalog: Map[Movie.Uid, Movie])
+    extends MovieCatalog {
+  override def get(uid: Movie.Uid): EitherT[IO, MovieCatalog.Error, Movie] =
+    EitherT.fromOption[IO](
+      catalog.get(uid),
+      MovieCatalog.Error.MovieNotFound(uid)
+    )
 }
