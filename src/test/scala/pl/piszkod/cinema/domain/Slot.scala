@@ -9,7 +9,12 @@ class SlotSpec extends CatsEffectSuite {
   val localDate = LocalDate.of(2137, 4, 20)
   val zoneId = ZoneId.of("UTC")
 
-  test("should not collide if slot2 is outside slot1 (before)") {
+  test(
+    """
+      |should not collide if slot2 is outside slot1 (before)
+      |       XXXXXXXX
+      |YYYYY
+      |""".stripMargin) {
     val collides = timeSlot(
       startTime = LocalTime.of(12, 0),
       endTime = LocalTime.of(13, 0)
@@ -20,7 +25,12 @@ class SlotSpec extends CatsEffectSuite {
     assert(!collides)
   }
 
-  test("should not collide if slot2 is outside slot1 (after)") {
+  test(
+    """
+      |should not collide if slot2 is outside slot1 (after)
+      |XXXXXXXXX
+      |            YYYYYYYY
+      |""".stripMargin) {
     val collides = timeSlot(
       startTime = LocalTime.of(12, 0),
       endTime = LocalTime.of(13, 0)
@@ -31,7 +41,12 @@ class SlotSpec extends CatsEffectSuite {
     assert(!collides)
   }
 
-  test("should not collide if slot2 is outside slot1 (touching endTime and startTime)") {
+  test(
+    """
+      |should not collide if slot2 is outside slot1 (touching endTime and startTime)
+      |     XXXXXXX
+      |YYYYY
+      |""".stripMargin) {
     val collides = timeSlot(
       startTime = LocalTime.of(12, 0),
       endTime = LocalTime.of(13, 0)
@@ -42,7 +57,12 @@ class SlotSpec extends CatsEffectSuite {
     assert(!collides)
   }
 
-  test("should collide if slot2 overlaps slot1 (slot2 endTime is after slot1 startTime)") {
+  test(
+    """
+      |should collide if slot2 overlaps slot1 (slot2 endTime is after slot1 startTime)
+      |    XXXXXXX
+      |YYYYYY
+      |""".stripMargin) {
     val collides = timeSlot(
       startTime = LocalTime.of(12, 0),
       endTime = LocalTime.of(13, 0)
@@ -53,7 +73,12 @@ class SlotSpec extends CatsEffectSuite {
     assert(collides)
   }
 
-  test("should collide if slot2 overlaps slot1 (slot2 startTime is inside slo1 and endTime is after slot1 endTime)") {
+  test(
+    """
+      |should collide if slot2 overlaps slot1 (slot2 startTime is inside slo1 and endTime is after slot1 endTime)
+      |XXXXXXX
+      |   YYYYYYY
+      |""".stripMargin) {
     val collides = timeSlot(
       startTime = LocalTime.of(12, 0),
       endTime = LocalTime.of(13, 0)
@@ -64,7 +89,12 @@ class SlotSpec extends CatsEffectSuite {
     assert(collides)
   }
 
-  test("should not collide if slot2 is outside slot1 (touching startTime and endTime)") {
+  test(
+    """
+      |should not collide if slot2 is outside slot1 (touching startTime and endTime)
+      |XXXXXX
+      |      YYYYYY
+      |""".stripMargin) {
     val collides = timeSlot(
       startTime = LocalTime.of(12, 0),
       endTime = LocalTime.of(13, 0)
@@ -75,7 +105,12 @@ class SlotSpec extends CatsEffectSuite {
     assert(!collides)
   }
 
-  test("should collide if slot2 is over slot1") {
+  test(
+    """
+      |should collide if slot2 is over slot1
+      |   XXXXXX
+      |YYYYYYYYYYYY
+      |""".stripMargin) {
     val collides = timeSlot(
       startTime = LocalTime.of(12, 0),
       endTime = LocalTime.of(13, 0)

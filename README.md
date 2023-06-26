@@ -37,13 +37,11 @@ Movie that is scheduled for specific time and room
 
 List of movies that we have available to show
 
-* Premiere
-
-Not defined in task, mentioned in user stories. ASSUMPTION: I'm assuming that it's a parameter for the movie itself (not specific showing), since it says in task description that "Not every movie are equal"
-
 * Cleaning slot 
 
-Time slot after each show we need care of cleaning the room.
+Time after each show we need care of cleaning the room.
+
+Note: I considered whether to model "cleaning slot" as implementation of Slot, but since cleaning slot is so strongly tied with Show I decided to just keep it as a parameter in Show itself.
 
 ### New terms
 
@@ -51,7 +49,7 @@ Time slot after each show we need care of cleaning the room.
 
 A schedule contains information about when the particular room is occupied and by what activity. 
 
-Schedule is a "log" in a sense that future changes to e.g. room cleaning time should not change existing scheduled cleaning time.  
+Schedule is a "log" in a sense that future changes to e.g. room cleaning time should not change existing Schedule for this room.  
 
 * Slot
 
@@ -60,6 +58,10 @@ Slot is an item with start and an end that blocks particular amount of time in S
 * Block
 
 Block is a type of Slot that signifies blockage of a room in a Schedule.
+
+* Premiere
+
+ASSUMPTION: I'm assuming that it's a parameter for the movie itself (not specific Show)
 
 ## Run application
 
