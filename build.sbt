@@ -2,6 +2,7 @@ ThisBuild / organization := "com.example"
 ThisBuild / scalaVersion := "3.3.0"
 
 lazy val root = (project in file(".")).settings(
+  scalacOptions += "-source:future",
   name := "cinema-challenge",
   libraryDependencies ++= Seq(
     // "core" module - IO, IOApp, schedulers

@@ -12,6 +12,21 @@ import pl.piszkod.cinema.service.ScheduleManager.Error
 import java.time.ZonedDateTime
 
 object ScheduleManager {
+
+  def build(
+      scheduleRepository: ScheduleRepository,
+      roomRepository: RoomRepository,
+      movieCatalog: MovieCatalog,
+      semaphore: IO[Semaphore[IO]] = Semaphore[IO](1)
+  ) = semaphore.map(
+    new ScheduleManager(
+      scheduleRepository,
+      roomRepository,
+      movieCatalog,
+      _
+    )
+  )
+
   sealed trait Error
 
   object Error {
@@ -27,8 +42,10 @@ object ScheduleManager {
     case class RoomNot3D(room: Room.Name, movie: Movie.Uid)
         extends ScheduleManager.Error
 
-    case class NewSlotCollides(newSlot: Slot, existingSlot: Slot)
-        extends ScheduleManager.Error
+    case class NewSlotCollidesWithExistingRoomSchedule(
+        newSlot: Slot,
+        existingSlot: Slot
+    ) extends ScheduleManager.Error
 
     case class CannotSchedulePremiereOutsideHours(show: Show)
         extends ScheduleManager.Error
@@ -95,23 +112,33 @@ class ScheduleManager(
       _ <- trySchedule(room, newShow)
     } yield ()
 
-  private def check3DRestriction(movie: Movie, room: Room) = EitherT.cond[IO](
-    movie.requirements.contains(
-      Movie.Requirement.Glasses3D
-    ) && !room.capabilities.contains(Room.Capability.ThreeD),
-    (),
-    ScheduleManager.Error.RoomNot3D(room.name, movie.uid)
-  )
+  private def check3DRestriction(movie: Movie, room: Room) =
+    // TODO: prettify?
+    if (
+      movie.requirements.contains(
+        Movie.Requirement.Glasses3D
+      ) && !room.capabilities.contains(Room.Capability.ThreeD)
+    ) {
+      EitherT.leftT[IO, Unit](
+        ScheduleManager.Error.RoomNot3D(room.name, movie.uid)
+      )
+    } else {
+      EitherT.rightT[IO, ScheduleManager.Error](())
+    }
 
   private def checkPremiereRestriction(newSlot: Slot) =
+    // TODO: Prettify?
     newSlot match {
       case show: Show =>
-        EitherT.cond[IO](
-          // TODO: Those magic numbers should be in config, but since there is no config, I'm leaving them here as they are
-          show.movieSnapshot.kind == Movie.Kind.Premiere && (newSlot.start.value.getHour < 17 || newSlot.start.value.getHour > 21),
-          (),
-          ScheduleManager.Error.CannotSchedulePremiereOutsideHours(show)
-        )
+        if (
+          show.movieSnapshot.kind == Movie.Kind.Premiere && (newSlot.start.value.getHour < 17 || newSlot.start.value.getHour >= 21)
+        ) {
+          EitherT.leftT[IO, Unit](
+            ScheduleManager.Error.CannotSchedulePremiereOutsideHours(show)
+          )
+        } else {
+          EitherT.rightT[IO, ScheduleManager.Error](())
+        }
       case _ => EitherT.pure[IO, ScheduleManager.Error](())
     }
 
@@ -125,11 +152,14 @@ class ScheduleManager(
         .leftMap(ScheduleManager.Error.ScheduleRepositoryError.apply)
       // TODO: This could return all collisions instead of first one. For simplicity, I'm just checking for the first collision
       _ <- existingSlots.traverse_ { existingSlot =>
-        EitherT.cond[IO](
-          existingSlot.collides(newSlot),
-          (),
-          ScheduleManager.Error.NewSlotCollides(newSlot, existingSlot)
-        )
+        if (existingSlot.collides(newSlot)) {
+          EitherT.leftT[IO, Unit](
+            ScheduleManager.Error
+              .NewSlotCollidesWithExistingRoomSchedule(newSlot, existingSlot)
+          )
+        } else {
+          EitherT.rightT[IO, ScheduleManager.Error](())
+        }
       }
       _ <- scheduleRepository
         .addSlotToSchedule(room.name, newSlot)
