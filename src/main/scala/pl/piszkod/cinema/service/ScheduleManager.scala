@@ -49,6 +49,9 @@ object ScheduleManager {
 
     case class CannotSchedulePremiereOutsideHours(show: Show)
         extends ScheduleManager.Error
+
+    case class CannotScheduleShowOutsideWorkingHours(show: Show)
+        extends ScheduleManager.Error
   }
 }
 
@@ -108,6 +111,7 @@ class ScheduleManager(
         roomCleaningTimeSnapshot = Show.CleaningTime(room.cleaningTime.value)
       )
       _ <- check3DRestriction(movie, room)
+      _ <- checkCinemaWorkingHoursRestriction(newShow)
       _ <- checkPremiereRestriction(newShow)
       _ <- trySchedule(room, newShow)
     } yield ()
@@ -126,20 +130,31 @@ class ScheduleManager(
       EitherT.rightT[IO, ScheduleManager.Error](())
     }
 
-  private def checkPremiereRestriction(newSlot: Slot) =
-    // TODO: Prettify?
-    newSlot match {
-      case show: Show =>
-        if (
-          show.movieSnapshot.kind == Movie.Kind.Premiere && (newSlot.start.value.getHour < 17 || newSlot.start.value.getHour >= 21)
-        ) {
-          EitherT.leftT[IO, Unit](
-            ScheduleManager.Error.CannotSchedulePremiereOutsideHours(show)
-          )
-        } else {
-          EitherT.rightT[IO, ScheduleManager.Error](())
-        }
-      case _ => EitherT.pure[IO, ScheduleManager.Error](())
+  private def checkCinemaWorkingHoursRestriction(show: Show) =
+    if (
+      // TODO: Those values should be in the config, but for simplicity I'm keeping them as magic numbers
+      show.start.value.getHour < 8 ||
+      show.start.value.getHour >= 22 ||
+      show.end.value.getHour < 8 ||
+      show.end.value.getHour >= 22
+    ) {
+      EitherT.leftT[IO, Unit](
+        ScheduleManager.Error.CannotScheduleShowOutsideWorkingHours(show)
+      )
+    } else {
+      EitherT.rightT[IO, ScheduleManager.Error](())
+    }
+
+  private def checkPremiereRestriction(show: Show) =
+    if (
+      // TODO: Those values should be in the config, but for simplicity I'm keeping them as magic numbers
+      show.movieSnapshot.kind == Movie.Kind.Premiere && (show.start.value.getHour < 17 || show.start.value.getHour >= 21)
+    ) {
+      EitherT.leftT[IO, Unit](
+        ScheduleManager.Error.CannotSchedulePremiereOutsideHours(show)
+      )
+    } else {
+      EitherT.rightT[IO, ScheduleManager.Error](())
     }
 
   private def trySchedule(

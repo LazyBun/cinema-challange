@@ -135,6 +135,35 @@ class ScheduleManagerSpec extends CatsEffectSuite {
     }
   }
 
+  test("Should fail if tries to schedule show outside cinema working hours") {
+    for {
+      (scheduleManager, scheduleRef) <- createScheduleManagerWithSchedule(
+        Map(
+          room3d.name -> Seq()
+        )
+      )
+
+      resultBefore <- scheduleManager
+        .scheduleShow(
+          room3d.name,
+          Slot.Start(ZonedDateTime.of(localDate, LocalTime.of(2, 0), zoneId)),
+          movie.uid
+        )
+        .value
+      resultAfter <- scheduleManager
+        .scheduleShow(
+          room3d.name,
+          Slot.Start(ZonedDateTime.of(localDate, LocalTime.of(23, 0), zoneId)),
+          movie.uid
+        )
+        .value
+    } yield {
+      (resultBefore, resultAfter) match
+        case (Left(err: ScheduleManager.Error.CannotScheduleShowOutsideWorkingHours), Left(er: ScheduleManager.Error.CannotScheduleShowOutsideWorkingHours)) => ()
+        case _ => fail("unexpected result")
+    }
+  }
+
   test("Should schedule show if tries to schedule 3d show in 3d room") {
     for {
       (scheduleManager, scheduleRef) <- createScheduleManagerWithSchedule(
