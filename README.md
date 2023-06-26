@@ -47,17 +47,19 @@ Time slot after each show we need care of cleaning the room.
 
 ### New terms
 
+* Schedule
+
+A schedule contains information about when the particular room is occupied and by what activity. 
+
+Schedule is a "log" in a sense that future changes to e.g. room cleaning time should not change existing scheduled cleaning time.  
+
 * Slot
 
-TODO: proper definition
-
-Item in a Schedule. Can be either a Show or a Block
+Slot is an item with start and an end that blocks particular amount of time in Schedule. 
 
 * Block
 
-TODO: proper definition
-
-Block is a type of Slot that signifies blockage
+Block is a type of Slot that signifies blockage of a room in a Schedule.
 
 ## Run application
 

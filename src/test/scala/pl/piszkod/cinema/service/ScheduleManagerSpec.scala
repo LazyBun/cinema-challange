@@ -1,7 +1,11 @@
 package pl.piszkod.cinema.service
 
-import cats.effect.{IO, Ref}
+import cats.effect.std.Semaphore
+import cats.effect.{Async, IO, Ref, Spawn, Temporal}
 import munit.CatsEffectSuite
+import cats.syntax.all.*
+
+import scala.concurrent.duration.*
 import pl.piszkod.cinema.domain.{Block, Movie, Room, Schedule, Show, Slot}
 import pl.piszkod.cinema.repository.{
   InMemoryRoomRepository,
@@ -129,8 +133,8 @@ class ScheduleManagerSpec extends CatsEffectSuite {
               err: ScheduleManager.Error.CannotSchedulePremiereOutsideHours
             ) =>
           ()
-        case _ =>
-          fail("unexpected result")
+        case e =>
+          fail(s"unexpected result: $e")
       }
     }
   }
@@ -143,24 +147,27 @@ class ScheduleManagerSpec extends CatsEffectSuite {
         )
       )
 
-      resultBefore <- scheduleManager
-        .scheduleShow(
-          room3d.name,
-          Slot.Start(ZonedDateTime.of(localDate, LocalTime.of(2, 0), zoneId)),
-          movie.uid
-        )
-        .value
-      resultAfter <- scheduleManager
-        .scheduleShow(
-          room3d.name,
-          Slot.Start(ZonedDateTime.of(localDate, LocalTime.of(23, 0), zoneId)),
-          movie.uid
-        )
-        .value
+      results <- List(
+        LocalTime.of(2, 0),
+        LocalTime.of(23, 0),
+        LocalTime.of(21, 0)
+      ).traverse { time =>
+        scheduleManager
+          .scheduleShow(
+            room3d.name,
+            Slot.Start(ZonedDateTime.of(localDate, time, zoneId)),
+            movie.uid
+          )
+          .value
+      }
     } yield {
-      (resultBefore, resultAfter) match
-        case (Left(err: ScheduleManager.Error.CannotScheduleShowOutsideWorkingHours), Left(er: ScheduleManager.Error.CannotScheduleShowOutsideWorkingHours)) => ()
-        case _ => fail("unexpected result")
+      results.foreach {
+        case Left(
+              err: ScheduleManager.Error.CannotScheduleShowOutsideWorkingHours
+            ) =>
+          ()
+        case e => fail(s"unexpected result: $e")
+      }
     }
   }
 
@@ -214,8 +221,8 @@ class ScheduleManagerSpec extends CatsEffectSuite {
       result match {
         case Left(err: ScheduleManager.Error.RoomNot3D) =>
           ()
-        case _ =>
-          fail("unexpected result")
+        case e =>
+          fail(s"unexpected result: $e")
       }
     }
   }
@@ -248,14 +255,11 @@ class ScheduleManagerSpec extends CatsEffectSuite {
               err: ScheduleManager.Error.NewSlotCollidesWithExistingRoomSchedule
             ) =>
         // Success
-        case _ =>
-          fail("unexpected result")
+        case e =>
+          fail(s"unexpected result: $e")
       }
     }
   }
-
-  // TODO: How to test?
-  test("Should not allow for concurrent schedule modifications") {}
 
   test("Should schedule block") {
     for {
@@ -289,9 +293,46 @@ class ScheduleManagerSpec extends CatsEffectSuite {
     }
   }
 
+  test("Should not allow for concurrent schedule modifications") {
+    for {
+      scheduleRef <- Ref.of[IO, Schedule](
+        Map(
+          room3d.name -> Seq()
+        )
+      )
+      movieCatalog <- IO.pure(createMovieCatalog())
+      roomRepository = createRoomRepository()
+      scheduleRepository = createScheduleRepository(scheduleRef)
+
+      scheduleManager <- ScheduleManager.build(
+        scheduleRepository,
+        roomRepository,
+        movieCatalog,
+        Semaphore[IO](0)
+      )
+      // TODO: There has to be a better way to test this, but this will do for now
+      _ = scheduleManager
+        .scheduleBlock(
+          room3d.name,
+          Slot.Start(
+            ZonedDateTime.of(localDate, LocalTime.of(12, 0), zoneId)
+          ),
+          Block.Time(Duration.ofHours(6))
+        )
+        .value
+        .unsafeRunAndForget()
+      _ <- Temporal[IO].sleep(2.seconds)
+
+      schedule <- scheduleRef.get
+    } yield {
+      assert(schedule(room3d.name).isEmpty)
+    }
+
+  }
+
   private def createScheduleManagerWithSchedule(
       schedule: Schedule
-  ): IO[(ScheduleManager, Ref[IO, Schedule])] = for {
+  ) = for {
     scheduleRef <- Ref.of[IO, Schedule](schedule)
     movieCatalog <- IO.pure(createMovieCatalog())
     roomRepository = createRoomRepository()

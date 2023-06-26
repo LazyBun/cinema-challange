@@ -4,7 +4,6 @@ import java.time.ZonedDateTime
 import java.util.concurrent.TimeUnit
 import java.time.Duration
 
-// TODO: Document the idea behind the slot type
 trait Slot {
   val start: Slot.Start
 
@@ -40,7 +39,7 @@ object Block {
 
 case class Show(
     override val start: Slot.Start,
-    // TODO: Better name? This is to indicate that those values are a copy (because we want to have historical data like that)
+    // TODO: Snapshot _might_ not be the best name here, but the idea is that future changes of the movie/cleaning time should not affect already schedule items
     movieSnapshot: Movie,
     roomCleaningTimeSnapshot: Show.CleaningTime
 ) extends Slot {

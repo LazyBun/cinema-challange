@@ -117,7 +117,6 @@ class ScheduleManager(
     } yield ()
 
   private def check3DRestriction(movie: Movie, room: Room) =
-    // TODO: prettify?
     if (
       movie.requirements.contains(
         Movie.Requirement.Glasses3D

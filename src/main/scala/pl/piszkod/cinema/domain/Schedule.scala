@@ -1,6 +1,6 @@
 package pl.piszkod.cinema.domain
 
-// TODO: This could be separate entites, but for now I've decided to use a simple typealiased map
+// TODO: This could be defined as separate entity, but for simplicity's sake, I decided to just typealias map
 type Schedule = Map[Room.Name, Seq[Slot]]
 type RoomSchedule = Seq[Slot]
 
