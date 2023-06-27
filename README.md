@@ -2,6 +2,8 @@
 
 Coding challenge: https://github.com/radbrackets/cinema-challange
 
+Time spent: ~8h
+
 ## Details
 
 The task is to model the work that the Planner does for planning of the week

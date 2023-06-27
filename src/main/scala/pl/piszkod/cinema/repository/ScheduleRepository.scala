@@ -55,7 +55,7 @@ class InMemoryScheduleRepository(val scheduleRef: Ref[IO, Schedule])
   ): EitherT[IO, ScheduleRepository.Error, Unit] =
     for {
       // TODO: Handle case where there is no schedule for the room yet
-      //    Since it states in the challange description that we don't need to cover all cases, this one I've decided to leave unhandled
+      //    Since it states in the challenge description that we don't need to cover all cases, this one I've decided to leave unhandled
       existingRoomSchedule <- getRoomSchedule(room)
       _ <- EitherT.right(
         scheduleRef.update(previousSchedule =>
